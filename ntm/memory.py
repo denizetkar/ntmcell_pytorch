@@ -72,7 +72,7 @@ class NTMMemory(nn.Module):
 
     def _similarity(self, k, β):
         k = k.view(self.batch_size, 1, -1)
-        w = F.softmax(β * F.cosine_similarity(self.memory + 1e-16, k + 1e-16, dim=-1), dim=1)
+        w = F.softmax(β * F.cosine_similarity(self.memory + 1e-16, k + 1e-16, dim=-1), dim=-1)
         return w
 
     def _interpolate(self, w_prev, wc, g):
@@ -86,5 +86,5 @@ class NTMMemory(nn.Module):
 
     def _sharpen(self, ŵ, γ):
         w = ŵ ** γ
-        w = torch.div(w, torch.sum(w, dim=1).view(-1, 1) + 1e-16)
+        w = torch.div(w, torch.sum(w, dim=-1, keepdim=True) + 1e-16)
         return w

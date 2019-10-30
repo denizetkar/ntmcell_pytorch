@@ -20,7 +20,7 @@ class NTMHeadBase(nn.Module):
         k = k.clone()
         β = F.softplus(β)
         g = torch.sigmoid(g)
-        s = F.softmax(s, dim=1)
+        s = F.softmax(s, dim=-1)
         γ = 1 + F.softplus(γ)
 
         w = memory.address(k, β, g, s, γ, w_prev)
