@@ -19,8 +19,8 @@ class NTMCell(nn.Module):
         self.output_dim = output_dim
         self.N = N
         self.M = M
-        self.read_heads = nn.ModuleList([NTMReadHead(N, M, controller_dim) for _ in range(num_read_heads)])
-        self.write_heads = nn.ModuleList([NTMWriteHead(N, M, controller_dim) for _ in range(num_write_heads)])
+        self.read_heads = NTMReadHead(N, M, num_read_heads, controller_dim)
+        self.write_heads = NTMWriteHead(N, M, num_write_heads, controller_dim)
         self.controller = controller_cls(input_dim + num_read_heads * M, controller_dim, **other_controller_params)
         self.device = None
 
@@ -37,10 +37,10 @@ class NTMCell(nn.Module):
         return super(NTMCell, self).to(*args, **kwargs)
 
     def create_new_state(self, batch_size):
-        initial_reads = [torch.zeros((batch_size, self.M)) for _ in range(len(self.read_heads))]
+        initial_reads = torch.zeros((batch_size, len(self.read_heads), self.M))
         controller_state = self.controller.create_new_state(batch_size)
-        read_head_states = [head.create_new_state(batch_size) for head in self.read_heads]
-        write_head_states = [head.create_new_state(batch_size) for head in self.write_heads]
+        read_head_states = self.read_heads.create_new_state(batch_size)
+        write_head_states = self.write_heads.create_new_state(batch_size)
         ntm_memory = NTMMemory(self.N, self.M)
         ntm_memory.reset(batch_size)
 
@@ -57,29 +57,25 @@ class NTMCell(nn.Module):
         prev_reads, prev_controller_state, prev_read_head_states, prev_write_head_states, prev_ntm_memory = prev_state
 
         # Use the controller to get an embeddings
-        inp = torch.cat([x] + prev_reads, dim=1)
+        inp = torch.cat([x, prev_reads.view(-1, len(self.read_heads) * self.M)], dim=-1)
         controller_outp, controller_state = self.controller(inp, prev_controller_state)
 
-        # Read/Write from the list of heads
-        reads, read_head_states = [], []
-        for head, prev_head_state in zip(self.read_heads, prev_read_head_states):
-            r, head_state = head(controller_outp, prev_head_state, prev_ntm_memory)
-            reads.append(r)
-            read_head_states.append(head_state)
-        w_e_a_list, write_head_states = [], []
-        for head, prev_head_state in zip(self.write_heads, prev_write_head_states):
-            w_e_a, head_state = head(controller_outp, prev_head_state, prev_ntm_memory)
-            w_e_a_list.append(w_e_a)
-            write_head_states.append(head_state)
-        # Perform the erase operations
-        for w, e, a in w_e_a_list:
-            prev_ntm_memory.write_erase(w, e)
-        # Perform the addition operations
-        for w, e, a in w_e_a_list:
-            prev_ntm_memory.write_add(w, a)
+        # VECTORIZE !!!!!!!!!!!!!!
+        reads, read_head_states = self.read_heads(controller_outp, prev_read_head_states, prev_ntm_memory)
+        (w, e, a), write_head_states = self.write_heads(controller_outp, prev_write_head_states, prev_ntm_memory)
+        # erases: [B, n, N, M]
+        erases = torch.matmul(w.unsqueeze(-1), e.unsqueeze(-2))
+        erase_multiplier = torch.ones(prev_ntm_memory.size())
+        for i in range(erases.size(1)):
+            erase = erases[:, i]
+            erase_multiplier *= (1 - erase)
+        prev_ntm_memory.mul(erase_multiplier)
+        # addition: [B, n, N, M]
+        addition = torch.matmul(w.unsqueeze(-1), a.unsqueeze(-2))
+        prev_ntm_memory.add(addition.sum(dim=1))
 
         # Generate Output
-        inp2 = torch.cat([controller_outp] + reads, dim=1)
+        inp2 = torch.cat([controller_outp, reads.view(-1, len(self.read_heads) * self.M)], dim=-1)
         o = self.fc(inp2)
 
         # Pack the current state
