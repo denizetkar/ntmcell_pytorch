@@ -31,7 +31,7 @@ class CellStacker(nn.Module):
         output_seq = [None for _ in range(seq_len)]
         states = list(prev_states)
         for i in range(seq_len):
-            inp = input_seq[:, i] if self.batch_first else input_seq[i]
+            inp = input_seq.select(dim=seq_len_dim_index, index=i)
             # propagate 'inp' through each layer cell
             inp, states[0] = self.layer_cells[0](inp, states[0])
             for layer_num in range(1, len(self.layer_cells)):
