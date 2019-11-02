@@ -7,28 +7,28 @@ from ..lstm import LSTM
 
 
 class Controller(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_size, output_size):
         super(Controller, self).__init__()
 
-        self.input_dim = input_dim
-        self.output_dim = output_dim
+        self.input_size = input_size
+        self.output_size = output_size
 
     def create_new_state(self, batch_size):
         raise NotImplementedError
 
     def size(self):
-        return self.input_dim, self.output_dim
+        return self.input_size, self.output_size
 
 
 class LSTMController(Controller):
     """An NTM controller based on LSTM."""
 
-    def __init__(self, input_dim, output_dim, **other_controller_params):
-        super(LSTMController, self).__init__(input_dim, output_dim)
+    def __init__(self, input_size, output_size, **other_controller_params):
+        super(LSTMController, self).__init__(input_size, output_size)
 
         if not other_controller_params:
             other_controller_params = dict(num_layers=1, dropout=0.1)
-        self.lstm = LSTM(input_dim, output_dim, **other_controller_params)
+        self.lstm = LSTM(input_size, output_size, **other_controller_params)
 
     def create_new_state(self, batch_size):
         return self.lstm.create_new_state(batch_size)
@@ -42,12 +42,12 @@ class LSTMController(Controller):
 class GRUController(Controller):
     """An NTM controller based on GRU."""
 
-    def __init__(self, input_dim, output_dim, **other_controller_params):
-        super(GRUController, self).__init__(input_dim, output_dim)
+    def __init__(self, input_size, output_size, **other_controller_params):
+        super(GRUController, self).__init__(input_size, output_size)
 
         if not other_controller_params:
             other_controller_params = dict(num_layers=1, dropout=0.1)
-        self.gru = GRU(input_dim, output_dim, **other_controller_params)
+        self.gru = GRU(input_size, output_size, **other_controller_params)
 
     def create_new_state(self, batch_size):
         return self.gru.create_new_state(batch_size)
@@ -61,8 +61,8 @@ class GRUController(Controller):
 class MLPController(Controller):
     """An NTM controller based on multilayer perceptron."""
 
-    def __init__(self, input_dim, output_dim, hidden_layers=None):
-        super(MLPController, self).__init__(input_dim, output_dim)
+    def __init__(self, input_size, output_size, hidden_layers=None):
+        super(MLPController, self).__init__(input_size, output_size)
 
         if hidden_layers is None:
             hidden_layers = [(128, 0.1, True), (128, 0.1, True)]
@@ -71,12 +71,12 @@ class MLPController(Controller):
         self.dropouts = nn.ModuleList([nn.AlphaDropout(dropout) for dropout in dropout_rates])
         # define network layers
         self.hidden_layers = nn.ModuleList(
-            [nn.Linear(input_dim, hidden_layer_sizes[0])] + [nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1])
+            [nn.Linear(input_size, hidden_layer_sizes[0])] + [nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1])
                                                              for i in range(len(hidden_layers) - 1)])
         self.bn_layers = nn.ModuleList(
             [nn.BatchNorm1d(hidden_layer_size) if use_batch_layers[layer_num] else nn.Identity()
              for layer_num, hidden_layer_size in enumerate(hidden_layer_sizes)])
-        self.output_layer = nn.Linear(hidden_layer_sizes[-1], output_dim)
+        self.output_layer = nn.Linear(hidden_layer_sizes[-1], output_size)
 
     def create_new_state(self, batch_size):
         return None

@@ -3,30 +3,30 @@ import torch.nn as nn
 
 
 class LSTMCell(nn.Module):
-    def __init__(self, input_dim, hidden_dim, use_bias=True, use_layer_norm=True):
+    def __init__(self, input_size, hidden_size, use_bias=True, use_layer_norm=True):
         super(LSTMCell, self).__init__()
-        self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
-        self.input_to_gates_layer = nn.Linear(input_dim, 4 * hidden_dim, bias=False)
-        self.hidden_to_gates_layer = nn.Linear(hidden_dim, 4 * hidden_dim, bias=False)
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.input_to_gates_layer = nn.Linear(input_size, 4 * hidden_size, bias=False)
+        self.hidden_to_gates_layer = nn.Linear(hidden_size, 4 * hidden_size, bias=False)
 
         if use_bias:
-            self.gates_bias = nn.Parameter(torch.zeros(4 * hidden_dim))
+            self.gates_bias = nn.Parameter(torch.zeros(4 * hidden_size))
         else:
-            self.gates_bias = torch.zeros(4 * hidden_dim)
+            self.gates_bias = torch.zeros(4 * hidden_size)
 
         if use_layer_norm:
-            self.layer_norm_i = nn.ModuleList([nn.LayerNorm(hidden_dim, eps=1e-10) for _ in range(4)])
-            self.layer_norm_h = nn.ModuleList([nn.LayerNorm(hidden_dim, eps=1e-10) for _ in range(4)])
-            self.layer_norm_c = nn.LayerNorm(hidden_dim, eps=1e-10)
+            self.layer_norm_i = nn.ModuleList([nn.LayerNorm(hidden_size, eps=1e-10) for _ in range(4)])
+            self.layer_norm_h = nn.ModuleList([nn.LayerNorm(hidden_size, eps=1e-10) for _ in range(4)])
+            self.layer_norm_c = nn.LayerNorm(hidden_size, eps=1e-10)
         else:
             self.layer_norm_i = nn.ModuleList([nn.Identity() for _ in range(4)])
             self.layer_norm_h = nn.ModuleList([nn.Identity() for _ in range(4)])
             self.layer_norm_c = nn.Identity()
 
     def create_new_state(self, batch_size):
-        hx = torch.zeros((batch_size, self.hidden_dim))
-        cx = torch.zeros((batch_size, self.hidden_dim))
+        hx = torch.zeros((batch_size, self.hidden_size))
+        cx = torch.zeros((batch_size, self.hidden_size))
         return hx, cx
 
     def forward(self, inp, state):

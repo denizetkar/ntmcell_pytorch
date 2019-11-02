@@ -3,18 +3,18 @@ import torch.nn as nn
 
 
 class CellStacker(nn.Module):
-    def __init__(self, input_dim, hidden_dim, cell_cls, num_layers=1, use_bias=True, batch_first=False, dropout=0.0,
+    def __init__(self, input_size, hidden_size, cell_cls, num_layers=1, use_bias=True, batch_first=False, dropout=0.0,
                  use_layer_norm=None):
         super(CellStacker, self).__init__()
         assert num_layers > 0, 'number of layers is not bigger than 0 (%s)' % str(num_layers)
 
         if use_layer_norm is None:
-            self.layer_cells = nn.ModuleList([cell_cls(input_dim, hidden_dim, use_bias)] +
-                                             [cell_cls(hidden_dim, hidden_dim, use_bias)
+            self.layer_cells = nn.ModuleList([cell_cls(input_size, hidden_size, use_bias)] +
+                                             [cell_cls(hidden_size, hidden_size, use_bias)
                                               for _ in range(num_layers - 1)])
         else:
-            self.layer_cells = nn.ModuleList([cell_cls(input_dim, hidden_dim, use_bias, use_layer_norm)] +
-                                             [cell_cls(hidden_dim, hidden_dim, use_bias, use_layer_norm)
+            self.layer_cells = nn.ModuleList([cell_cls(input_size, hidden_size, use_bias, use_layer_norm)] +
+                                             [cell_cls(hidden_size, hidden_size, use_bias, use_layer_norm)
                                               for _ in range(num_layers - 1)])
         self.batch_first = batch_first
         self.dropout_layer = nn.Dropout(dropout)
@@ -24,7 +24,7 @@ class CellStacker(nn.Module):
         return states
 
     def forward(self, input_seq, prev_states):
-        # input_seq: [seq_len, batch_size, input_dim] OR [batch_size, seq_len, input_dim]
+        # input_seq: [seq_len, batch_size, input_size] OR [batch_size, seq_len, input_size]
         seq_len_dim_index = int(self.batch_first)
         seq_len = input_seq.shape[seq_len_dim_index]
 

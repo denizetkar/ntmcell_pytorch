@@ -4,12 +4,12 @@ import torch.nn.functional as F
 
 
 class NTMHeadBase(nn.Module):
-    def __init__(self, N, M, head_num, controller_dim):
+    def __init__(self, N, M, head_num, controller_size):
         super(NTMHeadBase, self).__init__()
         self.N = N
         self.M = M
         self.head_num = head_num
-        self.controller_dim = controller_dim
+        self.controller_size = controller_size
 
     def __len__(self):
         return self.head_num
@@ -33,11 +33,11 @@ class NTMHeadBase(nn.Module):
 
 
 class NTMReadHead(NTMHeadBase):
-    def __init__(self, N, M, head_num, controller_dim):
-        super(NTMReadHead, self).__init__(N, M, head_num, controller_dim)
+    def __init__(self, N, M, head_num, controller_size):
+        super(NTMReadHead, self).__init__(N, M, head_num, controller_size)
         # Corresponding to k, β, g, s, γ sizes from the paper
         self.read_lengths = [self.M, 1, 1, 3, 1]
-        self.fc_read = nn.Linear(controller_dim, head_num * sum(self.read_lengths))
+        self.fc_read = nn.Linear(controller_size, head_num * sum(self.read_lengths))
 
     def forward(self, controller_output, w_prev, memory):
         o = self.fc_read(controller_output).view(-1, self.head_num, sum(self.read_lengths))
@@ -51,11 +51,11 @@ class NTMReadHead(NTMHeadBase):
 
 
 class NTMWriteHead(NTMHeadBase):
-    def __init__(self, N, M, head_num, controller_dim):
-        super(NTMWriteHead, self).__init__(N, M, head_num, controller_dim)
+    def __init__(self, N, M, head_num, controller_size):
+        super(NTMWriteHead, self).__init__(N, M, head_num, controller_size)
         # Corresponding to k, β, g, s, γ, e, a sizes from the paper
         self.write_lengths = [self.M, 1, 1, 3, 1, self.M, self.M]
-        self.fc_write = nn.Linear(controller_dim, head_num * sum(self.write_lengths))
+        self.fc_write = nn.Linear(controller_size, head_num * sum(self.write_lengths))
 
     def forward(self, controller_output, w_prev, memory):
         o = self.fc_write(controller_output).view(-1, self.head_num, sum(self.write_lengths))

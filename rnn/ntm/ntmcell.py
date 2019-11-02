@@ -8,25 +8,25 @@ from .utils import tensor_to_device
 
 
 class NTMCell(nn.Module):
-    def __init__(self, input_dim, output_dim, N=32, M=8, num_read_heads=1, num_write_heads=1, controller_dim=64,
+    def __init__(self, input_size, output_size, N=32, M=8, num_read_heads=1, num_write_heads=1, controller_size=64,
                  controller_cls=GRUController, other_controller_params=None):
         if other_controller_params is None:
             other_controller_params = {}
         assert num_read_heads > 0 and num_write_heads > 0, "heads list must contain at least a single read head"
 
         super(NTMCell, self).__init__()
-        self.input_dim = input_dim
-        self.output_dim = output_dim
+        self.input_size = input_size
+        self.output_size = output_size
         self.N = N
         self.M = M
-        self.read_heads = NTMReadHead(N, M, num_read_heads, controller_dim)
-        self.write_heads = NTMWriteHead(N, M, num_write_heads, controller_dim)
-        self.controller = controller_cls(input_dim + num_read_heads * M, controller_dim, **other_controller_params)
+        self.read_heads = NTMReadHead(N, M, num_read_heads, controller_size)
+        self.write_heads = NTMWriteHead(N, M, num_write_heads, controller_size)
+        self.controller = controller_cls(input_size + num_read_heads * M, controller_size, **other_controller_params)
         self.device = None
 
         # Initialize a fully connected layer to produce the actual output:
         #   [controller_output; previous_reads ] -> output
-        self.fc = nn.Linear(controller_dim + num_read_heads * M, output_dim)
+        self.fc = nn.Linear(controller_size + num_read_heads * M, output_size)
 
     def to(self, *args, **kwargs):
         if args and (isinstance(args[0], torch.device) or ('cuda' in args[0]) or ('cpu' in args[0])):
@@ -50,7 +50,7 @@ class NTMCell(nn.Module):
     def forward(self, x, prev_state):
         """NTM forward function.
 
-        :param x: input vector (batch_size x input_dim)
+        :param x: input vector (batch_size x input_size)
         :param prev_state: The previous state of the NTM
         """
         # Unpack the previous state
