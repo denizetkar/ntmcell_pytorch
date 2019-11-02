@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 class NTMMemory(nn.Module):
     """Memory bank for NTM."""
+
     def __init__(self, N, M):
         """Initialize the NTM Memory matrix.
 

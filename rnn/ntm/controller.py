@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ..gru import GRU
+from ..lstm import LSTM
+
 
 class Controller(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -19,14 +22,15 @@ class Controller(nn.Module):
 
 class LSTMController(Controller):
     """An NTM controller based on LSTM."""
+
     def __init__(self, input_dim, output_dim, num_layers=1, dropout=0.1):
         super(LSTMController, self).__init__(input_dim, output_dim)
 
         self.num_layers = num_layers
-        self.lstm = nn.LSTM(input_size=input_dim,
-                            hidden_size=output_dim,
-                            num_layers=num_layers,
-                            dropout=dropout)
+        self.lstm = LSTM(input_dim,
+                         output_dim,
+                         num_layers=num_layers,
+                         dropout=dropout)
 
     def create_new_state(self, batch_size):
         # Dimension: (num_layers * num_directions, batch, hidden_size)
@@ -42,14 +46,15 @@ class LSTMController(Controller):
 
 class GRUController(Controller):
     """An NTM controller based on GRU."""
+
     def __init__(self, input_dim, output_dim, num_layers=1, dropout=0.1):
         super(GRUController, self).__init__(input_dim, output_dim)
 
         self.num_layers = num_layers
-        self.gru = nn.GRU(input_size=input_dim,
-                          hidden_size=output_dim,
-                          num_layers=num_layers,
-                          dropout=dropout)
+        self.gru = GRU(input_dim,
+                       output_dim,
+                       num_layers=num_layers,
+                       dropout=dropout)
 
     def create_new_state(self, batch_size):
         # Dimension: (num_layers * num_directions, batch, hidden_size)
@@ -64,6 +69,7 @@ class GRUController(Controller):
 
 class MLPController(Controller):
     """An NTM controller based on multilayer perceptron."""
+
     def __init__(self, input_dim, output_dim, hidden_layers=None):
         super(MLPController, self).__init__(input_dim, output_dim)
 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ntm import NTMCell
+from rnn.ntm import NTMCell
 
 
 def main():

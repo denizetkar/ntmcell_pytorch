@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
+from .controller import GRUController
 from .head import NTMReadHead, NTMWriteHead
 from .memory import NTMMemory
-from .controller import GRUController
 from .utils import tensor_to_device
 
 
