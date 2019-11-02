@@ -68,7 +68,7 @@ class MLPController(Controller):
             hidden_layers = [(128, 0.1, True), (128, 0.1, True)]
 
         hidden_layer_sizes, dropout_rates, use_batch_layers = zip(*hidden_layers)
-        self.dropouts = nn.ModuleList([nn.Dropout(dropout) for dropout in dropout_rates])
+        self.dropouts = nn.ModuleList([nn.AlphaDropout(dropout) for dropout in dropout_rates])
         # define network layers
         self.hidden_layers = nn.ModuleList(
             [nn.Linear(input_dim, hidden_layer_sizes[0])] + [nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1])
