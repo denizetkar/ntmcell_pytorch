@@ -33,10 +33,7 @@ class LSTMController(Controller):
                          dropout=dropout)
 
     def create_new_state(self, batch_size):
-        # Dimension: (num_layers * num_directions, batch, hidden_size)
-        lstm_h = torch.zeros((self.num_layers, batch_size, self.output_dim))
-        lstm_c = torch.zeros((self.num_layers, batch_size, self.output_dim))
-        return lstm_h, lstm_c
+        return self.lstm.create_new_state(batch_size)
 
     def forward(self, x, prev_state):
         x = x.unsqueeze(0)
@@ -57,9 +54,7 @@ class GRUController(Controller):
                        dropout=dropout)
 
     def create_new_state(self, batch_size):
-        # Dimension: (num_layers * num_directions, batch, hidden_size)
-        gru_h = torch.zeros((self.num_layers, batch_size, self.output_dim))
-        return gru_h
+        return self.gru.create_new_state(batch_size)
 
     def forward(self, x, prev_state):
         x = x.unsqueeze(0)
