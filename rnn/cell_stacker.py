@@ -29,16 +29,14 @@ class CellStacker(nn.Module):
         seq_len = input_seq.shape[seq_len_dim_index]
 
         output_seq = [None for _ in range(seq_len)]
-        states = [None for _ in range(len(prev_states))]
+        states = list(prev_states)
         for i in range(seq_len):
             inp = input_seq[:, i] if self.batch_first else input_seq[i]
             # propagate 'inp' through each layer cell
-            inp, state = self.layer_cells[0](inp, prev_states[0])
-            states[0] = state
+            inp, states[0] = self.layer_cells[0](inp, states[0])
             for layer_num in range(1, len(self.layer_cells)):
                 inp = self.dropout_layer(inp)
-                inp, state = self.layer_cells[layer_num](inp, prev_states[layer_num])
-                states[layer_num] = state
+                inp, states[layer_num] = self.layer_cells[layer_num](inp, states[layer_num])
             output_seq[i] = inp
 
         return torch.stack(output_seq, dim=seq_len_dim_index), tuple(states)
