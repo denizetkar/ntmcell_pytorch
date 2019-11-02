@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -71,8 +70,8 @@ class MLPController(Controller):
         self.dropouts = nn.ModuleList([nn.AlphaDropout(dropout) for dropout in dropout_rates])
         # define network layers
         self.hidden_layers = nn.ModuleList(
-            [nn.Linear(input_size, hidden_layer_sizes[0])] + [nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1])
-                                                             for i in range(len(hidden_layers) - 1)])
+            [nn.Linear(input_size, hidden_layer_sizes[0])] +
+            [nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1]) for i in range(len(hidden_layers) - 1)])
         self.bn_layers = nn.ModuleList(
             [nn.BatchNorm1d(hidden_layer_size) if use_batch_layers[layer_num] else nn.Identity()
              for layer_num, hidden_layer_size in enumerate(hidden_layer_sizes)])
