@@ -23,14 +23,12 @@ class Controller(nn.Module):
 class LSTMController(Controller):
     """An NTM controller based on LSTM."""
 
-    def __init__(self, input_dim, output_dim, num_layers=1, dropout=0.1):
+    def __init__(self, input_dim, output_dim, **other_controller_params):
         super(LSTMController, self).__init__(input_dim, output_dim)
 
-        self.num_layers = num_layers
-        self.lstm = LSTM(input_dim,
-                         output_dim,
-                         num_layers=num_layers,
-                         dropout=dropout)
+        if not other_controller_params:
+            other_controller_params = dict(num_layers=1, dropout=0.1)
+        self.lstm = LSTM(input_dim, output_dim, **other_controller_params)
 
     def create_new_state(self, batch_size):
         return self.lstm.create_new_state(batch_size)
@@ -44,14 +42,12 @@ class LSTMController(Controller):
 class GRUController(Controller):
     """An NTM controller based on GRU."""
 
-    def __init__(self, input_dim, output_dim, num_layers=1, dropout=0.1):
+    def __init__(self, input_dim, output_dim, **other_controller_params):
         super(GRUController, self).__init__(input_dim, output_dim)
 
-        self.num_layers = num_layers
-        self.gru = GRU(input_dim,
-                       output_dim,
-                       num_layers=num_layers,
-                       dropout=dropout)
+        if not other_controller_params:
+            other_controller_params = dict(num_layers=1, dropout=0.1)
+        self.gru = GRU(input_dim, output_dim, **other_controller_params)
 
     def create_new_state(self, batch_size):
         return self.gru.create_new_state(batch_size)
