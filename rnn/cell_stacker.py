@@ -37,6 +37,6 @@ class CellStacker(nn.Module):
             for layer_num in range(1, len(self.layer_cells)):
                 inp = self.dropout_layer(inp)
                 inp, states[layer_num] = self.layer_cells[layer_num](inp, states[layer_num])
-            output_seq[i] = inp
+            output_seq[i] = inp.unsqueeze(seq_len_dim_index)
 
-        return torch.stack(output_seq, dim=seq_len_dim_index), tuple(states)
+        return torch.cat(output_seq, dim=seq_len_dim_index), tuple(states)
