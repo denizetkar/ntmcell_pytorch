@@ -65,11 +65,7 @@ class NTMCell(nn.Module):
         (w, e, a), write_head_states = self.write_heads(controller_outp, prev_write_head_states, prev_ntm_memory)
         # erases: [B, n, N, M]
         erases = torch.matmul(w.unsqueeze(-1), e.unsqueeze(-2))
-        erase_multiplier = torch.ones(prev_ntm_memory.size())
-        for i in range(erases.size(1)):
-            erase = erases[:, i]
-            erase_multiplier *= (1 - erase)
-        prev_ntm_memory.mul(erase_multiplier)
+        prev_ntm_memory.mul((1 - erases).prod(dim=1))
         # addition: [B, n, N, M]
         addition = torch.matmul(w.unsqueeze(-1), a.unsqueeze(-2))
         prev_ntm_memory.add(addition.sum(dim=1))
